@@ -1,6 +1,6 @@
 pub mod context;
 pub mod device;
-pub mod motors;
+pub mod motors_led;
 pub mod video;
 
 use thiserror::Error;
@@ -15,4 +15,6 @@ pub enum FreenectError {
     DeviceNotFound(u32),
     #[error("Unable to open device {0}.")]
     OpenDeviceError(u32),
+    #[error("Unable to set LED state.")]
+    LedStateError,
 }

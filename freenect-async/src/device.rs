@@ -1,6 +1,9 @@
-use std::mem::ManuallyDrop;
+use std::{default, mem::ManuallyDrop};
 
-use crate::context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady};
+use crate::{
+    context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady},
+    FreenectError,
+};
 
 pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
     pub context: &'a FreenectContext<D>,
@@ -15,7 +18,6 @@ impl<'a, D: FreenectDeviceReady + FreenectDeviceMode> Drop for FreenectDevice<'a
         }
     }
 }
-
 
 impl<'a, D: FreenectDeviceReady + FreenectDeviceMode> FreenectDevice<'a, D> {
     fn into_handle(self) -> *mut freenect_sys::freenect_device {

@@ -1,4 +1,7 @@
-use std::{mem::{MaybeUninit, ManuallyDrop}, ptr};
+use std::{
+    mem::{ManuallyDrop, MaybeUninit},
+    ptr,
+};
 
 use crate::{device::FreenectDevice, FreenectError};
 
