@@ -1,5 +1,6 @@
 use std::{
     default,
+    ffi::CStr,
     mem::{ManuallyDrop, MaybeUninit},
     ptr,
 };
@@ -127,9 +128,28 @@ where
         }
     }
 
-    pub fn set_log_callback(&self) {
-        // FIXME: set a callback and stuff
-        todo!()
+    pub fn set_log_callback(&self, callback: Option<LogCallback>) {
+        unsafe extern "C" fn c_callback_wrapper(
+            dev: *mut freenect_sys::freenect_context,
+            level: freenect_sys::freenect_loglevel,
+            msg: *const std::os::raw::c_char,
+        ) {
+            let msg_str = std::ffi::CStr::from_ptr(msg);
+            let level = FreenectLogLevel::try_from(level).unwrap_or_default();
+            if let Some(cb) = LOG_CALLBACK {
+                cb(level, msg_str)
+            }
+        }
+
+        unsafe {
+            match callback {
+                None => freenect_sys::freenect_set_log_callback(self.inner, None),
+                Some(c) => {
+                    freenect_sys::freenect_set_log_callback(self.inner, Some(c_callback_wrapper));
+                    LOG_CALLBACK = Some(c);
+                }
+            }
+        }
     }
 
     fn into_handle(self) -> *mut freenect_sys::freenect_context {
@@ -137,6 +157,10 @@ where
         m.inner
     }
 }
+
+type LogCallback = fn(level: FreenectLogLevel, msg: &CStr);
+// FIXME: find a way to not use a static mut here
+static mut LOG_CALLBACK: Option<LogCallback> = None;
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -150,6 +174,24 @@ pub enum FreenectLogLevel {
     Debug = freenect_sys::freenect_loglevel_FREENECT_LOG_DEBUG,
     Spew = freenect_sys::freenect_loglevel_FREENECT_LOG_SPEW,
     Flood = freenect_sys::freenect_loglevel_FREENECT_LOG_FLOOD,
+}
+
+impl TryFrom<u32> for FreenectLogLevel {
+    type Error = ();
+
+    fn try_from(value: u32) -> Result<Self, ()> {
+        Ok(match value {
+            freenect_sys::freenect_loglevel_FREENECT_LOG_FATAL => FreenectLogLevel::Fatal,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_ERROR => FreenectLogLevel::Error,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_WARNING => FreenectLogLevel::Warning,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_NOTICE => FreenectLogLevel::Notice,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_INFO => FreenectLogLevel::Info,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_DEBUG => FreenectLogLevel::Debug,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_SPEW => FreenectLogLevel::Spew,
+            freenect_sys::freenect_loglevel_FREENECT_LOG_FLOOD => FreenectLogLevel::Flood,
+            _ => return Err(())
+        })
+    }
 }
 
 impl<M> FreenectContext<M>
