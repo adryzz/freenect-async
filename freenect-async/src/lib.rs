@@ -11,10 +11,9 @@ pub struct FreenectContext<M: FreenectDeviceMode> {
 impl FreenectContext<FreenectInitialized> {
     pub fn new() -> Result<FreenectContext<FreenectInitialized>, FreenectError> {
         unsafe {
-            #[allow(invalid_value)]
-            let mut inner = MaybeUninit::uninit().assume_init();
-            let res = freenect_sys::freenect_init(&mut inner, ptr::null_mut());
-            #[warn(invalid_value)]
+            let mut inner = MaybeUninit::uninit();
+            let res = freenect_sys::freenect_init(inner.as_mut_ptr(), ptr::null_mut());
+            let inner = inner.assume_init();
             if res < 0 {
                 return Err(FreenectError::ContextCreationError);
             }
@@ -75,12 +74,11 @@ where
             return Err(FreenectError::DeviceNotFound(idx));
         }
         unsafe {
-            #[allow(invalid_value)]
-            let mut dev = MaybeUninit::uninit().assume_init();
-            if freenect_sys::freenect_open_device(self.inner, &mut dev, idx as i32) < 0 {
+            let mut dev = MaybeUninit::uninit();
+            if freenect_sys::freenect_open_device(self.inner, dev.as_mut_ptr(), idx as i32) < 0 {
                 return Err(FreenectError::OpenDeviceError(idx));
             }
-            #[warn(invalid_value)]
+            let dev = dev.assume_init();
             Ok(FreenectDevice {
                 context: self,
                 inner: dev,
