@@ -1,4 +1,4 @@
-use std::{mem::MaybeUninit, ptr};
+use std::{mem::{MaybeUninit, ManuallyDrop}, ptr};
 
 use crate::{device::FreenectDevice, FreenectError};
 
@@ -35,14 +35,14 @@ pub struct FreenectContext<M: FreenectDeviceMode> {
 }
 
 impl FreenectContext<FreenectInitialized> {
-    pub fn new() -> Result<FreenectContext<FreenectInitialized>, FreenectError> {
+    pub fn new() -> Result<Self, FreenectError> {
         unsafe {
             let mut inner = MaybeUninit::uninit();
             let res = freenect_sys::freenect_init(inner.as_mut_ptr(), ptr::null_mut());
-            let inner = inner.assume_init();
             if res < 0 {
                 return Err(FreenectError::ContextCreationError);
             }
+            let inner = inner.assume_init();
             Ok(Self {
                 inner,
                 marker: std::marker::PhantomData,
@@ -58,7 +58,7 @@ impl FreenectContext<FreenectInitialized> {
             )
         };
         FreenectContext {
-            inner: self.inner,
+            inner: self.into_handle(),
             marker: std::marker::PhantomData,
         }
     }
@@ -72,7 +72,7 @@ impl FreenectContext<FreenectInitialized> {
             )
         };
         FreenectContext {
-            inner: self.inner,
+            inner: self.into_handle(),
             marker: std::marker::PhantomData,
         }
     }
@@ -88,6 +88,11 @@ where
             return Err(FreenectError::DeviceListError);
         }
         Ok(res as u32)
+    }
+
+    fn into_handle(self) -> *mut freenect_sys::freenect_context {
+        let m = ManuallyDrop::new(self);
+        m.inner
     }
 }
 

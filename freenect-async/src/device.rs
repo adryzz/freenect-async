@@ -1,3 +1,5 @@
+use std::mem::ManuallyDrop;
+
 use crate::context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady};
 
 pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
@@ -11,5 +13,13 @@ impl<'a, D: FreenectDeviceReady + FreenectDeviceMode> Drop for FreenectDevice<'a
         unsafe {
             freenect_sys::freenect_close_device(self.inner);
         }
+    }
+}
+
+
+impl<'a, D: FreenectDeviceReady + FreenectDeviceMode> FreenectDevice<'a, D> {
+    fn into_handle(self) -> *mut freenect_sys::freenect_device {
+        let m = ManuallyDrop::new(self);
+        m.inner
     }
 }
