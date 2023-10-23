@@ -82,6 +82,7 @@ where
             }
             #[warn(invalid_value)]
             Ok(FreenectDevice {
+                context: self,
                 inner: dev,
                 marker: self.marker,
             })
@@ -99,25 +100,26 @@ impl<M: FreenectDeviceMode> Drop for FreenectContext<M> {
 
 pub trait FreenectDeviceMode {}
 
-struct FreenectInitialized {}
+enum FreenectInitialized {}
 
 impl FreenectDeviceMode for FreenectInitialized {}
 
 pub trait FreenectDeviceReady {}
 
-struct FreenectReadyVideo {}
+enum FreenectReadyVideo {}
 
 impl FreenectDeviceMode for FreenectReadyVideo {}
 
 impl FreenectDeviceReady for FreenectReadyVideo {}
 
-struct FreenectReadyVideoMotors {}
+enum FreenectReadyVideoMotors {}
 
 impl FreenectDeviceMode for FreenectReadyVideoMotors {}
 
 impl FreenectDeviceReady for FreenectReadyVideoMotors {}
 
-pub struct FreenectDevice<D: FreenectDeviceReady + FreenectDeviceMode> {
+pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
+    pub context: &'a FreenectContext<D>,
     inner: *mut freenect_sys::freenect_device,
     marker: std::marker::PhantomData<D>,
 }
