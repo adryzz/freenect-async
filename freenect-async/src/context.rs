@@ -4,25 +4,25 @@ use crate::{FreenectError, device::FreenectDevice};
 
 pub trait FreenectDeviceMode {}
 
-pub(crate) enum FreenectInitialized {}
+pub enum FreenectInitialized {}
 
 impl FreenectDeviceMode for FreenectInitialized {}
 
 pub trait FreenectDeviceReady {}
 
-pub(crate) enum FreenectReadyVideo {}
+pub enum FreenectReadyVideo {}
 
 impl FreenectDeviceMode for FreenectReadyVideo {}
 
 impl FreenectDeviceReady for FreenectReadyVideo {}
 
-pub(crate) enum FreenectReadyVideoMotors {}
+pub enum FreenectReadyVideoMotors {}
 
 impl FreenectDeviceMode for FreenectReadyVideoMotors {}
 
 impl FreenectDeviceReady for FreenectReadyVideoMotors {}
 
-pub(crate) enum FreenectReadyMotors {}
+pub enum FreenectReadyMotors {}
 
 impl FreenectDeviceMode for FreenectReadyMotors {}
 
