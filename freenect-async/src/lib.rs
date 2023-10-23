@@ -124,6 +124,14 @@ pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
     marker: std::marker::PhantomData<D>,
 }
 
+impl<'a, D: FreenectDeviceReady + FreenectDeviceMode> Drop for FreenectDevice<'a, D> {
+    fn drop(&mut self) {
+        unsafe {
+            freenect_sys::freenect_close_device(self.inner);
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Error)]
 pub enum FreenectError {
     #[error("Unable to create the freenect context.")]
