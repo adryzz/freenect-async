@@ -103,7 +103,7 @@ impl<M> FreenectContext<M>
 where
     M: FreenectDeviceReady + FreenectDeviceMode,
 {
-    pub fn open_device(&self, index: u32) -> Result<FreenectDevice<M>, FreenectError> {
+    pub fn open_device(&mut self, index: u32) -> Result<FreenectDevice<M>, FreenectError> {
         if index >= self.list_devices()? {
             return Err(FreenectError::DeviceNotFound(index));
         }
@@ -114,9 +114,9 @@ where
             }
             let dev = dev.assume_init();
             Ok(FreenectDevice {
-                context: self,
                 inner: dev,
                 marker: self.marker,
+                context: self,
             })
         }
     }

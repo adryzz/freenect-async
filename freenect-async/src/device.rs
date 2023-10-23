@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
-    pub context: &'a FreenectContext<D>,
+    pub context: &'a mut FreenectContext<D>,
     pub(crate) inner: *mut freenect_sys::freenect_device,
     pub(crate) marker: std::marker::PhantomData<D>,
 }
