@@ -1,9 +1,6 @@
 use std::{default, mem::ManuallyDrop};
 
-use crate::{
-    context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady},
-    FreenectError,
-};
+use crate::context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady};
 
 pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
     pub context: &'a mut FreenectContext<D>,

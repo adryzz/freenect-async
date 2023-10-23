@@ -1,4 +1,5 @@
 use std::{
+    default,
     mem::{ManuallyDrop, MaybeUninit},
     ptr,
 };
@@ -120,10 +121,35 @@ where
         Ok(res as u32)
     }
 
+    pub fn set_log_level(&self, level: FreenectLogLevel) {
+        unsafe {
+            freenect_sys::freenect_set_log_level(self.inner, level as u32);
+        }
+    }
+
+    pub fn set_log_callback(&self) {
+        // FIXME: set a callback and stuff
+        todo!()
+    }
+
     fn into_handle(self) -> *mut freenect_sys::freenect_context {
         let m = ManuallyDrop::new(self);
         m.inner
     }
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FreenectLogLevel {
+    #[default]
+    Fatal = freenect_sys::freenect_loglevel_FREENECT_LOG_FATAL,
+    Error = freenect_sys::freenect_loglevel_FREENECT_LOG_ERROR,
+    Warning = freenect_sys::freenect_loglevel_FREENECT_LOG_WARNING,
+    Notice = freenect_sys::freenect_loglevel_FREENECT_LOG_NOTICE,
+    Info = freenect_sys::freenect_loglevel_FREENECT_LOG_INFO,
+    Debug = freenect_sys::freenect_loglevel_FREENECT_LOG_DEBUG,
+    Spew = freenect_sys::freenect_loglevel_FREENECT_LOG_SPEW,
+    Flood = freenect_sys::freenect_loglevel_FREENECT_LOG_FLOOD,
 }
 
 impl<M> FreenectContext<M>

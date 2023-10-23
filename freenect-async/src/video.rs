@@ -1,4 +1,4 @@
-use crate::context::{FreenectReadyVideo, FreenectReadyVideoMotors, FreenectReadyAll};
+use crate::context::{FreenectReadyAll, FreenectReadyVideo, FreenectReadyVideoMotors};
 
 pub trait FreenectVideo {}
 

@@ -1,6 +1,7 @@
 use crate::{
     context::{
-        FreenectDeviceMode, FreenectDeviceReady, FreenectReadyMotors, FreenectReadyVideoMotors, FreenectReadyAll,
+        FreenectDeviceMode, FreenectDeviceReady, FreenectReadyAll, FreenectReadyMotors,
+        FreenectReadyVideoMotors,
     },
     device::FreenectDevice,
     FreenectError,
