@@ -1,2 +1,3 @@
 [workspace]
 members = ["freenect-sys", "freenect-async"]
+resolver = "2"

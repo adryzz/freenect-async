@@ -116,6 +116,24 @@ impl FreenectDeviceMode for FreenectReadyVideoMotors {}
 
 impl FreenectDeviceReady for FreenectReadyVideoMotors {}
 
+enum FreenectReadyMotors {}
+
+impl FreenectDeviceMode for FreenectReadyMotors {}
+
+impl FreenectDeviceReady for FreenectReadyMotors {}
+
+pub trait FreenectMotors {}
+
+impl FreenectMotors for FreenectReadyVideoMotors {}
+
+impl FreenectMotors for FreenectReadyMotors {}
+
+pub trait FreenectVideo {}
+
+impl FreenectVideo for FreenectReadyVideo {}
+
+impl FreenectVideo for FreenectReadyVideoMotors {}
+
 pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
     pub context: &'a FreenectContext<D>,
     inner: *mut freenect_sys::freenect_device,
