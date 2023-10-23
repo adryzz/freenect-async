@@ -34,6 +34,9 @@ where
     }
 
     pub fn set_ir_brightness(&mut self, brightness: u16) -> Result<(), FreenectError> {
+        if brightness > MAX_IR_BRIGHTNESS || brightness < MIN_IR_BRIGHTNESS {
+            return Err(FreenectError::BrightnessOutOfRange(brightness));
+        }
         unsafe {
             let res = freenect_sys::freenect_set_ir_brightness(self.inner, brightness);
             if res < 0 {
