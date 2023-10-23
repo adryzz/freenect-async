@@ -79,6 +79,19 @@ impl FreenectContext<FreenectInitialized> {
             marker: std::marker::PhantomData,
         }
     }
+
+    pub fn setup_motors(self) -> FreenectContext<FreenectReadyMotors> {
+        unsafe {
+            freenect_sys::freenect_select_subdevices(
+                self.inner,
+                freenect_sys::freenect_device_flags_FREENECT_DEVICE_MOTOR,
+            )
+        };
+        FreenectContext {
+            inner: self.into_handle(),
+            marker: std::marker::PhantomData,
+        }
+    }
 }
 
 impl<M> FreenectContext<M>
