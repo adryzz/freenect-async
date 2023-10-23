@@ -189,7 +189,7 @@ impl TryFrom<u32> for FreenectLogLevel {
             freenect_sys::freenect_loglevel_FREENECT_LOG_DEBUG => FreenectLogLevel::Debug,
             freenect_sys::freenect_loglevel_FREENECT_LOG_SPEW => FreenectLogLevel::Spew,
             freenect_sys::freenect_loglevel_FREENECT_LOG_FLOOD => FreenectLogLevel::Flood,
-            _ => return Err(())
+            _ => return Err(()),
         })
     }
 }

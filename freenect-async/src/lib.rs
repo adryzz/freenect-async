@@ -17,4 +17,14 @@ pub enum FreenectError {
     OpenDeviceError(u32),
     #[error("Unable to set LED state.")]
     LedStateError,
+    #[error("A tilt angle of {0}° is out of range! It should be between ±31°.")]
+    TiltAngleOutOfRange(f64),
+    #[error("Unable to set tilt angle.")]
+    TiltAngleError,
+    #[error("A brightness value of {0} is out of range! It should be between 1 and 50.")]
+    BrightnessOutOfRange(u16),
+    #[error("Unable to set brightness value.")]
+    SetBrightnessError,
+    #[error("Unable to get brightness value.")]
+    GetBrightnessError,
 }

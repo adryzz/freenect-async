@@ -7,6 +7,9 @@ use crate::{
     FreenectError,
 };
 
+const MIN_TILT_ANGLE: f64 = -31.0;
+const MAX_TILT_ANGLE: f64 = 31.0;
+
 pub trait FreenectMotors {}
 
 impl FreenectMotors for FreenectReadyVideoMotors {}
@@ -31,11 +34,20 @@ where
     }
 
     pub fn set_tilt_degree(&self, deg: f64) -> Result<(), FreenectError> {
+        if deg > MAX_TILT_ANGLE || deg < MIN_TILT_ANGLE {
+            return Err(FreenectError::TiltAngleOutOfRange(deg));
+        }
+        unsafe {
+            let res = freenect_sys::freenect_set_tilt_degs(self.inner, deg);
+            if res < 0 {
+                return Err(FreenectError::TiltAngleError);
+            }
+        }
         Ok(())
     }
 
     pub fn get_tilt_degree(&self) -> Result<f64, FreenectError> {
-        Ok(0.0)
+        todo!()
     }
 
     pub fn get_tilt_state(&self) -> Result<FreenectTiltState, FreenectError> {
