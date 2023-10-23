@@ -1,4 +1,4 @@
-use crate::context::{FreenectDeviceReady, FreenectDeviceMode, FreenectContext};
+use crate::context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady};
 
 pub struct FreenectDevice<'a, D: FreenectDeviceReady + FreenectDeviceMode> {
     pub context: &'a FreenectContext<D>,

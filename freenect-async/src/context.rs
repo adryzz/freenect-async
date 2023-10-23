@@ -1,6 +1,6 @@
 use std::{mem::MaybeUninit, ptr};
 
-use crate::{FreenectError, device::FreenectDevice};
+use crate::{device::FreenectDevice, FreenectError};
 
 pub trait FreenectDeviceMode {}
 
@@ -27,7 +27,6 @@ pub enum FreenectReadyMotors {}
 impl FreenectDeviceMode for FreenectReadyMotors {}
 
 impl FreenectDeviceReady for FreenectReadyMotors {}
-
 
 pub struct FreenectContext<M: FreenectDeviceMode> {
     pub(crate) inner: *mut freenect_sys::freenect_context,
@@ -96,14 +95,14 @@ impl<M> FreenectContext<M>
 where
     M: FreenectDeviceReady + FreenectDeviceMode,
 {
-    pub fn open_device(&self, idx: u32) -> Result<FreenectDevice<M>, FreenectError> {
-        if idx >= self.list_devices()? {
-            return Err(FreenectError::DeviceNotFound(idx));
+    pub fn open_device(&self, index: u32) -> Result<FreenectDevice<M>, FreenectError> {
+        if index >= self.list_devices()? {
+            return Err(FreenectError::DeviceNotFound(index));
         }
         unsafe {
             let mut dev = MaybeUninit::uninit();
-            if freenect_sys::freenect_open_device(self.inner, dev.as_mut_ptr(), idx as i32) < 0 {
-                return Err(FreenectError::OpenDeviceError(idx));
+            if freenect_sys::freenect_open_device(self.inner, dev.as_mut_ptr(), index as i32) < 0 {
+                return Err(FreenectError::OpenDeviceError(index));
             }
             let dev = dev.assume_init();
             Ok(FreenectDevice {

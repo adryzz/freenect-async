@@ -1,4 +1,10 @@
-use crate::{device::FreenectDevice, context::{FreenectDeviceReady, FreenectDeviceMode, FreenectReadyVideoMotors, FreenectReadyMotors}, FreenectError};
+use crate::{
+    context::{
+        FreenectDeviceMode, FreenectDeviceReady, FreenectReadyMotors, FreenectReadyVideoMotors,
+    },
+    device::FreenectDevice,
+    FreenectError,
+};
 
 pub trait FreenectMotors {}
 
@@ -6,7 +12,10 @@ impl FreenectMotors for FreenectReadyVideoMotors {}
 
 impl FreenectMotors for FreenectReadyMotors {}
 
-impl<'a, D> FreenectDevice<'a, D> where D: FreenectDeviceReady + FreenectDeviceMode + FreenectMotors {
+impl<'a, D> FreenectDevice<'a, D>
+where
+    D: FreenectDeviceReady + FreenectDeviceMode + FreenectMotors,
+{
     pub fn set_tilt_degree(&self, deg: f64) -> Result<(), FreenectError> {
         Ok(())
     }
