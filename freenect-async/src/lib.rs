@@ -53,7 +53,10 @@ impl FreenectContext<FreenectInitialized> {
     }
 }
 
-impl<M> FreenectContext<M> where M : FreenectDeviceMode {
+impl<M> FreenectContext<M>
+where
+    M: FreenectDeviceMode,
+{
     pub fn list_devices(&self) -> Result<u32, FreenectError> {
         let res = unsafe { freenect_sys::freenect_num_devices(self.inner) };
         if res < 0 {
@@ -63,11 +66,28 @@ impl<M> FreenectContext<M> where M : FreenectDeviceMode {
     }
 }
 
-/*impl<M> FreenectContext<M> where M : FreenectDeviceReady {
-    pub fn open_device(&self) -> Result<u32, FreenectError> {
-
+impl<M> FreenectContext<M>
+where
+    M: FreenectDeviceReady + FreenectDeviceMode,
+{
+    pub fn open_device(&self, idx: u32) -> Result<FreenectDevice<M>, FreenectError> {
+        if idx >= self.list_devices()? {
+            return Err(FreenectError::DeviceNotFound(idx));
+        }
+        unsafe {
+            #[allow(invalid_value)]
+            let mut dev = MaybeUninit::uninit().assume_init();
+            if freenect_sys::freenect_open_device(self.inner, &mut dev, idx as i32) < 0 {
+                return Err(FreenectError::OpenDeviceError(idx));
+            }
+            #[warn(invalid_value)]
+            Ok(FreenectDevice {
+                inner: dev,
+                marker: self.marker,
+            })
+        }
     }
-}*/
+}
 
 pub trait FreenectDeviceMode {}
 
@@ -89,6 +109,11 @@ impl FreenectDeviceMode for FreenectReadyVideoMotors {}
 
 impl FreenectDeviceReady for FreenectReadyVideoMotors {}
 
+pub struct FreenectDevice<D: FreenectDeviceReady + FreenectDeviceMode> {
+    inner: *mut freenect_sys::freenect_device,
+    marker: std::marker::PhantomData<D>,
+}
+
 #[derive(Debug, Clone, Copy, Error)]
 pub enum FreenectError {
     #[error("Unable to create the freenect context.")]
@@ -96,7 +121,7 @@ pub enum FreenectError {
     #[error("Unable to list connected freenect devices.")]
     DeviceListError,
     #[error("Device {0} not found.")]
-    DeviceNotFound(usize),
-    #[error("Unable to open device.")]
-    OpenDeviceError,
+    DeviceNotFound(u32),
+    #[error("Unable to open device {0}.")]
+    OpenDeviceError(u32),
 }
