@@ -89,6 +89,14 @@ where
     }
 }
 
+impl<M: FreenectDeviceMode> Drop for FreenectContext<M> {
+    fn drop(&mut self) {
+        unsafe {
+            freenect_sys::freenect_shutdown(self.inner);
+        }
+    }
+}
+
 pub trait FreenectDeviceMode {}
 
 struct FreenectInitialized {}
