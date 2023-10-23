@@ -1,6 +1,6 @@
 use crate::{
     context::{
-        FreenectDeviceMode, FreenectDeviceReady, FreenectReadyMotors, FreenectReadyVideoMotors,
+        FreenectDeviceMode, FreenectDeviceReady, FreenectReadyMotors, FreenectReadyVideoMotors, FreenectReadyAll,
     },
     device::FreenectDevice,
     FreenectError,
@@ -11,6 +11,8 @@ pub trait FreenectMotors {}
 impl FreenectMotors for FreenectReadyVideoMotors {}
 
 impl FreenectMotors for FreenectReadyMotors {}
+
+impl FreenectMotors for FreenectReadyAll {}
 
 impl<'a, D> FreenectDevice<'a, D>
 where

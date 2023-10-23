@@ -31,6 +31,12 @@ impl FreenectDeviceMode for FreenectReadyMotors {}
 
 impl FreenectDeviceReady for FreenectReadyMotors {}
 
+pub enum FreenectReadyAll {}
+
+impl FreenectDeviceMode for FreenectReadyAll {}
+
+impl FreenectDeviceReady for FreenectReadyAll {}
+
 pub struct FreenectContext<M: FreenectDeviceMode> {
     pub(crate) inner: *mut freenect_sys::freenect_context,
 
@@ -87,6 +93,14 @@ impl FreenectContext<FreenectInitialized> {
                 freenect_sys::freenect_device_flags_FREENECT_DEVICE_MOTOR,
             )
         };
+        FreenectContext {
+            inner: self.into_handle(),
+            marker: std::marker::PhantomData,
+        }
+    }
+
+    pub fn setup_all(self) -> FreenectContext<FreenectReadyAll> {
+        // do not call freenect_select_subdevices, as all subdevices are selected by default
         FreenectContext {
             inner: self.into_handle(),
             marker: std::marker::PhantomData,
