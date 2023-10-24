@@ -33,7 +33,7 @@ where
     }
 
     pub fn set_tilt_degree(&self, deg: f64) -> Result<(), FreenectError> {
-        if deg > MAX_TILT_ANGLE || deg < MIN_TILT_ANGLE {
+        if !(MIN_TILT_ANGLE..=MAX_TILT_ANGLE).contains(&deg) {
             return Err(FreenectError::TiltAngleOutOfRange(deg));
         }
         unsafe {

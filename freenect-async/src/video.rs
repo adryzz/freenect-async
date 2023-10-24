@@ -163,12 +163,12 @@ pub struct FreenectVideoMode {
     pub is_valid: bool,
 }
 
-impl Into<freenect_sys::freenect_frame_mode> for &FreenectVideoMode {
-    fn into(self) -> freenect_sys::freenect_frame_mode {
+impl From<&FreenectVideoMode> for freenect_sys::freenect_frame_mode {
+    fn from(value: &FreenectVideoMode) -> Self {
         freenect_sys::freenect_frame_mode {
-            reserved: self._reserved,
-            resolution: self.resolution as u32,
-            __bindgen_anon_1: match self.format {
+            reserved: value._reserved,
+            resolution: value.resolution as u32,
+            __bindgen_anon_1: match value.format {
                 FreenectFormat::Video(v) => freenect_sys::freenect_frame_mode__bindgen_ty_1 {
                     video_format: v as u32,
                 },
@@ -176,13 +176,13 @@ impl Into<freenect_sys::freenect_frame_mode> for &FreenectVideoMode {
                     depth_format: d as u32,
                 },
             },
-            bytes: self.bytes as i32,
-            width: self.width as i16,
-            height: self.height as i16,
-            data_bits_per_pixel: self.data_bits_per_pixel as i8,
-            padding_bits_per_pixel: self.padding_bits_per_pixel as i8,
-            framerate: self.framerate as i8,
-            is_valid: if self.is_valid { 1 } else { 0 },
+            bytes: value.bytes as i32,
+            width: value.width as i16,
+            height: value.height as i16,
+            data_bits_per_pixel: value.data_bits_per_pixel as i8,
+            padding_bits_per_pixel: value.padding_bits_per_pixel as i8,
+            framerate: value.framerate as i8,
+            is_valid: if value.is_valid { 1 } else { 0 },
         }
     }
 }

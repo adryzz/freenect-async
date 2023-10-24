@@ -1,4 +1,4 @@
-use std::{default, mem::ManuallyDrop};
+use std::mem::ManuallyDrop;
 
 use crate::context::{FreenectContext, FreenectDeviceMode, FreenectDeviceReady};
 
