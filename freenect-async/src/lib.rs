@@ -27,4 +27,8 @@ pub enum FreenectError {
     SetBrightnessError,
     #[error("Unable to get brightness value.")]
     GetBrightnessError,
+    #[error("Error while processing events")]
+    EventProcessingError,
+    #[error("Error with the video stream.")]
+    VideoStreamError,
 }
