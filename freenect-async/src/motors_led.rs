@@ -24,8 +24,7 @@ where
 {
     pub fn set_led(&self, state: FreenectLedState) -> Result<(), FreenectError> {
         unsafe {
-            let res = freenect_sys::freenect_set_led(self.inner, state as u32);
-            if res < 0 {
+            if freenect_sys::freenect_set_led(self.inner, state as u32) < 0 {
                 return Err(FreenectError::LedStateError);
             }
         }
@@ -38,8 +37,7 @@ where
             return Err(FreenectError::TiltAngleOutOfRange(deg));
         }
         unsafe {
-            let res = freenect_sys::freenect_set_tilt_degs(self.inner, deg);
-            if res < 0 {
+            if freenect_sys::freenect_set_tilt_degs(self.inner, deg) < 0 {
                 return Err(FreenectError::TiltAngleError);
             }
         }
@@ -69,9 +67,3 @@ pub enum FreenectLedState {
 
 /// FIXME: add options
 pub struct FreenectTiltState;
-
-impl FreenectTiltState {
-    fn to_c(&self) -> freenect_sys::freenect_raw_tilt_state {
-        todo!()
-    }
-}

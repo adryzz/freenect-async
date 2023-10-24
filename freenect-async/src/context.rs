@@ -1,5 +1,4 @@
 use std::{
-    default,
     ffi::CStr,
     mem::{ManuallyDrop, MaybeUninit},
     ptr,
@@ -49,8 +48,7 @@ impl FreenectContext<FreenectInitialized> {
     pub fn new() -> Result<Self, FreenectError> {
         unsafe {
             let mut inner = MaybeUninit::uninit();
-            let res = freenect_sys::freenect_init(inner.as_mut_ptr(), ptr::null_mut());
-            if res < 0 {
+            if freenect_sys::freenect_init(inner.as_mut_ptr(), ptr::null_mut()) < 0 {
                 return Err(FreenectError::ContextCreationError);
             }
             let inner = inner.assume_init();

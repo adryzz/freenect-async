@@ -40,8 +40,7 @@ where
             return Err(FreenectError::BrightnessOutOfRange(brightness));
         }
         unsafe {
-            let res = freenect_sys::freenect_set_ir_brightness(self.inner, brightness);
-            if res < 0 {
+            if freenect_sys::freenect_set_ir_brightness(self.inner, brightness) < 0 {
                 return Err(FreenectError::SetBrightnessError);
             }
         }
