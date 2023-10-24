@@ -1,4 +1,4 @@
-use std::{mem::transmute, fmt};
+use std::{fmt, mem::transmute};
 
 use crate::{
     context::{
@@ -111,21 +111,38 @@ where
         }
     }
 
-    pub fn start_video_stream<'b>(&'b mut self, video: &FreenectVideoMode, depth: &FreenectVideoMode) -> Result<VideoStream<'a, 'b, D>, FreenectError> {
+    pub fn start_video_stream<'b>(
+        &'b mut self,
+        video: &FreenectVideoMode,
+        depth: &FreenectVideoMode,
+    ) -> Result<VideoStream<'a, 'b, D>, FreenectError> {
+
+        if let FreenectFormat::Depth(_) = video.format {
+            return Err(FreenectError::BadVideoFormat);
+        }
+        if let FreenectFormat::Video(_) = depth.format {
+            return Err(FreenectError::BadVideoFormat);
+        }
+
         unsafe {
             let dev = self.inner;
+            if freenect_sys::freenect_set_video_mode(dev, video.into()) < 0 {
+                return Err(FreenectError::BadVideoFormat);
+            }
+            if freenect_sys::freenect_set_depth_mode(dev, depth.into()) < 0 {
+                return Err(FreenectError::BadVideoFormat);
+            }
+
             let video = VideoStream { device: self };
             freenect_sys::freenect_set_user(dev, transmute(&video));
             freenect_sys::freenect_set_video_callback(dev, Some(video_callback));
             freenect_sys::freenect_set_depth_callback(dev, Some(depth_callback));
 
-            let res = freenect_sys::freenect_start_depth(dev);
-            if res < 0 {
+            if freenect_sys::freenect_start_depth(dev) < 0 {
                 return Err(FreenectError::VideoStreamError);
             }
 
-            let res = freenect_sys::freenect_start_video(dev);
-            if res < 0 {
+            if freenect_sys::freenect_start_video(dev) < 0 {
                 return Err(FreenectError::VideoStreamError);
             }
             Ok(video)
@@ -147,10 +164,38 @@ pub struct FreenectVideoMode {
     pub is_valid: bool,
 }
 
+impl Into<freenect_sys::freenect_frame_mode> for &FreenectVideoMode {
+    fn into(self) -> freenect_sys::freenect_frame_mode {
+        freenect_sys::freenect_frame_mode {
+            reserved: self._reserved,
+            resolution: self.resolution as u32,
+            __bindgen_anon_1: match self.format {
+                FreenectFormat::Video(v) => freenect_sys::freenect_frame_mode__bindgen_ty_1 {
+                    video_format: v as u32,
+                },
+                FreenectFormat::Depth(d) => freenect_sys::freenect_frame_mode__bindgen_ty_1 {
+                    depth_format: d as u32,
+                },
+            },
+            bytes: self.bytes as i32,
+            width: self.width as i16,
+            height: self.height as i16,
+            data_bits_per_pixel: self.data_bits_per_pixel as i8,
+            padding_bits_per_pixel: self.padding_bits_per_pixel as i8,
+            framerate: self.framerate as i8,
+            is_valid: if self.is_valid { 1 } else { 0 },
+        }
+    }
+}
+
 impl fmt::Display for FreenectVideoMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mbps = (self.bytes * self.framerate as u32) / (1024 * 1024 / 8);
-        write!(f, "{} {}x{}@{}fps {}bpp, {}Mbps", self.format, self.width, self.height, self.framerate, self.data_bits_per_pixel, mbps)
+        write!(
+            f,
+            "{} {}x{}@{}fps {}bpp, {}Mbps",
+            self.format, self.width, self.height, self.framerate, self.data_bits_per_pixel, mbps
+        )
     }
 }
 
@@ -197,7 +242,7 @@ pub enum FreenectDepthFormat {
 impl fmt::Display for FreenectDepthFormat {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FreenectDepthFormat::Depth10Bit =>  write!(f, "10bit"),
+            FreenectDepthFormat::Depth10Bit => write!(f, "10bit"),
             FreenectDepthFormat::Depth10BitPacked => write!(f, "10bit packed"),
             FreenectDepthFormat::Depth11Bit => write!(f, "11bit"),
             FreenectDepthFormat::Depth11BitPacked => write!(f, "11bit packed"),

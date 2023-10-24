@@ -31,4 +31,6 @@ pub enum FreenectError {
     EventProcessingError,
     #[error("Error with the video stream.")]
     VideoStreamError,
+    #[error("Bad video format")]
+    BadVideoFormat,
 }
