@@ -1,4 +1,4 @@
-use std::mem::transmute;
+use std::{mem::transmute, fmt};
 
 use crate::{
     context::{
@@ -111,7 +111,7 @@ where
         }
     }
 
-    pub fn start_video_stream<'b>(&'b mut self) -> Result<VideoStream<'a, 'b, D>, FreenectError> {
+    pub fn start_video_stream<'b>(&'b mut self, video: &FreenectVideoMode, depth: &FreenectVideoMode) -> Result<VideoStream<'a, 'b, D>, FreenectError> {
         unsafe {
             let dev = self.inner;
             let video = VideoStream { device: self };
@@ -147,10 +147,26 @@ pub struct FreenectVideoMode {
     pub is_valid: bool,
 }
 
+impl fmt::Display for FreenectVideoMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mbps = (self.bytes * self.framerate as u32) / (1024 * 1024 / 8);
+        write!(f, "{} {}x{}@{}fps {}bpp, {}Mbps", self.format, self.width, self.height, self.framerate, self.data_bits_per_pixel, mbps)
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum FreenectFormat {
     Video(FreenectVideoFormat),
     Depth(FreenectDepthFormat),
+}
+
+impl fmt::Display for FreenectFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FreenectFormat::Video(v) => write!(f, "Video ({})", v),
+            FreenectFormat::Depth(d) => write!(f, "Depth ({})", d),
+        }
+    }
 }
 
 impl From<FreenectVideoFormat> for FreenectFormat {
@@ -176,6 +192,19 @@ pub enum FreenectDepthFormat {
     DepthRegistered = freenect_sys::freenect_depth_format_FREENECT_DEPTH_REGISTERED,
     DepthMillimeters = freenect_sys::freenect_depth_format_FREENECT_DEPTH_MM,
     //DepthDummy = freenect_sys::freenect_depth_format_FREENECT_DEPTH_DUMMY
+}
+
+impl fmt::Display for FreenectDepthFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FreenectDepthFormat::Depth10Bit =>  write!(f, "10bit"),
+            FreenectDepthFormat::Depth10BitPacked => write!(f, "10bit packed"),
+            FreenectDepthFormat::Depth11Bit => write!(f, "11bit"),
+            FreenectDepthFormat::Depth11BitPacked => write!(f, "11bit packed"),
+            FreenectDepthFormat::DepthRegistered => write!(f, "registered"),
+            FreenectDepthFormat::DepthMillimeters => write!(f, "mm"),
+        }
+    }
 }
 
 impl TryFrom<u32> for FreenectDepthFormat {
@@ -218,6 +247,20 @@ pub enum FreenectVideoFormat {
     Ir10Bit = freenect_sys::freenect_video_format_FREENECT_VIDEO_IR_10BIT,
     Ir10BitPacked = freenect_sys::freenect_video_format_FREENECT_VIDEO_IR_10BIT_PACKED,
     //Dummy = freenect_sys::freenect_video_format_FREENECT_VIDEO_DUMMY
+}
+
+impl fmt::Display for FreenectVideoFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FreenectVideoFormat::Rgb => write!(f, "RGB"),
+            FreenectVideoFormat::YuvRgb => write!(f, "YUV-RGB"),
+            FreenectVideoFormat::YuvRaw => write!(f, "YUV-RAW"),
+            FreenectVideoFormat::Bayer => write!(f, "BAYER"),
+            FreenectVideoFormat::Ir8Bit => write!(f, "IR-8bit"),
+            FreenectVideoFormat::Ir10Bit => write!(f, "IR-10bit"),
+            FreenectVideoFormat::Ir10BitPacked => write!(f, "IR-10bit packed"),
+        }
+    }
 }
 
 impl TryFrom<u32> for FreenectVideoFormat {
