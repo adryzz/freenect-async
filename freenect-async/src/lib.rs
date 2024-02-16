@@ -1,6 +1,8 @@
 pub mod context;
 pub mod device;
+pub mod formats;
 pub mod motors_led;
+pub mod stream;
 pub mod video;
 
 use thiserror::Error;

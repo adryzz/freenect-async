@@ -10,7 +10,7 @@ use crate::{
 const MIN_TILT_ANGLE: f64 = -31.0;
 const MAX_TILT_ANGLE: f64 = 31.0;
 
-pub trait FreenectMotors {}
+pub trait FreenectMotors: FreenectDeviceReady {}
 
 impl FreenectMotors for FreenectReadyVideoMotors {}
 
@@ -20,7 +20,7 @@ impl FreenectMotors for FreenectReadyAll {}
 
 impl<'a, D> FreenectDevice<'a, D>
 where
-    D: FreenectDeviceReady + FreenectDeviceMode + FreenectMotors,
+    D: FreenectMotors,
 {
     pub fn set_led(&self, state: FreenectLedState) -> Result<(), FreenectError> {
         unsafe {

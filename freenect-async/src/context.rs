@@ -12,7 +12,7 @@ pub enum FreenectInitialized {}
 
 impl FreenectDeviceMode for FreenectInitialized {}
 
-pub trait FreenectDeviceReady {}
+pub trait FreenectDeviceReady: FreenectDeviceMode {}
 
 pub enum FreenectReadyVideo {}
 
@@ -194,7 +194,7 @@ impl TryFrom<u32> for FreenectLogLevel {
 
 impl<M> FreenectContext<M>
 where
-    M: FreenectDeviceReady + FreenectDeviceMode,
+    M: FreenectDeviceReady,
 {
     pub fn open_device(&mut self, index: u32) -> Result<FreenectDevice<M>, FreenectError> {
         if index >= self.list_devices()? {

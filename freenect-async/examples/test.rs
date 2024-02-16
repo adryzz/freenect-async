@@ -1,11 +1,5 @@
 use freenect_async::{
-    context::{FreenectContext, FreenectLogLevel},
-    motors_led::FreenectLedState,
-    video::{
-        FreenectDepthFormat, FreenectFormat, FreenectResolution, FreenectVideoFormat,
-        FreenectVideoMode,
-    },
-    FreenectError,
+    context::{FreenectContext, FreenectLogLevel}, formats::{FreenectDepthFormat, FreenectResolution, FreenectVideoFormat}, motors_led::FreenectLedState, FreenectError
 };
 
 fn main() {
@@ -53,7 +47,7 @@ fn run() -> Result<(), FreenectError> {
     std::thread::sleep(std::time::Duration::from_millis(1000));
     dev.set_tilt_degree(0.0)?;
 
-    let mut stream = dev.start_video_stream(&vmode, &dmode)?;
+    let mut stream = dev.start_video_stream(&vmode)?;
 
     stream.dev_ref().set_tilt_degree(0.0)?;
     loop {
