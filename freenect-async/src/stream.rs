@@ -5,6 +5,7 @@ use crate::{
     context::{FreenectDeviceMode, FreenectDeviceReady, FreenectReadyVideo}, device::FreenectDevice, formats::{FreenectFormat, FreenectVideoMode}, video::FreenectVideo, FreenectError
 };
 
+#[derive(Debug)]
 pub struct VideoStream<'a, 'b, D: FreenectVideo> {
     // keep this private
     pub(crate) device: &'b mut FreenectDevice<'a, D>,
@@ -92,12 +93,13 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
             return Poll::Ready(Some(Ok(frame)))
         }
 
+
+        let res = unsafe { freenect_sys::freenect_process_events(self.device.context.inner) };
+        if res < 0 {
+            self.counter = 0;
+            return Poll::Ready(Some(Err(FreenectError::EventProcessingError)));
+        }
         if self.counter == 0 {
-            let res = unsafe { freenect_sys::freenect_process_events(self.device.context.inner) };
-            if res < 0 {
-                self.counter = 0;
-                return Poll::Ready(Some(Err(FreenectError::EventProcessingError)));
-            }
 
             self.counter += 1;
         }
@@ -106,6 +108,7 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
     }
 }
 
+#[derive(Debug)]
 pub struct DepthStream<'a, 'b, D: FreenectVideo> {
     // keep this private
     device: &'b mut FreenectDevice<'a, D>,
@@ -226,12 +229,14 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
     }
 }
 
+#[derive(Debug)]
 pub struct DepthFrame<'a, 'b, 'c, D: FreenectVideo> {
     _held: &'c DepthStream<'a, 'b, D>,
     pub timestamp: u32,
     pub data: &'c [u16],
 }
 
+#[derive(Debug)]
 pub struct CameraFrame<'a, 'b, 'c, D: FreenectVideo> {
     _held: &'c VideoStream<'a, 'b, D>,
     pub timestamp: u32,

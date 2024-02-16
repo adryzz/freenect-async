@@ -9,3 +9,6 @@ edition = "2021"
 freenect-sys = { path = "../freenect-sys" }
 lending-stream = "1.0.0"
 thiserror = "1.0.50"
+
+[dev-dependencies]
+tokio = { version = "1.36.0", features = ["full"] }

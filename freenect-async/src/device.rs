@@ -2,6 +2,7 @@ use std::mem::ManuallyDrop;
 
 use crate::context::{FreenectContext, FreenectDeviceReady};
 
+#[derive(Debug)]
 pub struct FreenectDevice<'a, D: FreenectDeviceReady> {
     pub context: &'a mut FreenectContext<D>,
     pub(crate) inner: *mut freenect_sys::freenect_device,

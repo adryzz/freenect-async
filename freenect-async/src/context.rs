@@ -38,6 +38,7 @@ impl FreenectDeviceMode for FreenectReadyAll {}
 
 impl FreenectDeviceReady for FreenectReadyAll {}
 
+#[derive(Debug)]
 pub struct FreenectContext<M: FreenectDeviceMode> {
     pub(crate) inner: *mut freenect_sys::freenect_context,
 
