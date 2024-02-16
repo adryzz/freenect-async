@@ -115,7 +115,6 @@ where
         video: &FreenectVideoMode,
         depth: &FreenectVideoMode,
     ) -> Result<VideoStream<'a, 'b, D>, FreenectError> {
-
         if let FreenectFormat::Depth(_) = video.format {
             return Err(FreenectError::BadVideoFormat);
         }
@@ -198,7 +197,7 @@ impl fmt::Display for FreenectVideoMode {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FreenectFormat {
     Video(FreenectVideoFormat),
     Depth(FreenectDepthFormat),
@@ -226,7 +225,7 @@ impl From<FreenectDepthFormat> for FreenectFormat {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FreenectDepthFormat {
     Depth10Bit = freenect_sys::freenect_depth_format_FREENECT_DEPTH_10BIT,
     Depth10BitPacked = freenect_sys::freenect_depth_format_FREENECT_DEPTH_10BIT_PACKED,
@@ -280,7 +279,7 @@ impl TryFrom<u32> for FreenectDepthFormat {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FreenectVideoFormat {
     #[default]
     Rgb = freenect_sys::freenect_video_format_FREENECT_VIDEO_RGB,
@@ -335,7 +334,7 @@ impl TryFrom<u32> for FreenectVideoFormat {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FreenectResolution {
     #[default]
     Low = freenect_sys::freenect_resolution_FREENECT_RESOLUTION_LOW,
@@ -398,30 +397,24 @@ impl<'a, 'b, D: FreenectDeviceReady + FreenectDeviceMode + FreenectVideo> VideoS
         self.device
     }
 
-    pub async fn try_read_depth_frame(&mut self) -> Result<Option<DepthFrame>, FreenectError> {
+    pub async fn try_read_depth_frame(&mut self) -> Result<Option<DepthFrame<D>>, FreenectError> {
         unsafe {
-            let res = freenect_sys::freenect_process_events_timeout(
-                self.device.context.inner,
-                std::mem::zeroed(),
-            );
+            let res = freenect_sys::freenect_process_events(self.device.context.inner);
             if res < 0 {
                 return Err(FreenectError::EventProcessingError);
             }
         }
-        todo!()
+        Ok(None)
     }
 
-    pub async fn try_read_camera_frame(&mut self) -> Result<Option<CameraFrame>, FreenectError> {
+    pub async fn try_read_camera_frame(&mut self) -> Result<Option<CameraFrame<D>>, FreenectError> {
         unsafe {
-            let res = freenect_sys::freenect_process_events_timeout(
-                self.device.context.inner,
-                std::mem::zeroed(),
-            );
+            let res = freenect_sys::freenect_process_events(self.device.context.inner);
             if res < 0 {
                 return Err(FreenectError::EventProcessingError);
             }
         }
-        todo!()
+        Ok(None)
     }
 }
 
@@ -430,6 +423,8 @@ impl<'a, 'b, D: FreenectDeviceReady + FreenectDeviceMode + FreenectVideo> Drop
 {
     fn drop(&mut self) {
         unsafe {
+            freenect_sys::freenect_stop_video(self.device.inner);
+            freenect_sys::freenect_stop_depth(self.device.inner);
             freenect_sys::freenect_set_video_callback(self.device.inner, None);
             freenect_sys::freenect_set_depth_callback(self.device.inner, None);
             freenect_sys::freenect_set_user(self.device.inner, std::ptr::null_mut());
@@ -437,12 +432,14 @@ impl<'a, 'b, D: FreenectDeviceReady + FreenectDeviceMode + FreenectVideo> Drop
     }
 }
 
-pub struct DepthFrame<'c> {
-    timestamp: u32,
-    data: &'c [u16],
+pub struct DepthFrame<'a, 'b, 'c, D: FreenectDeviceReady + FreenectDeviceMode + FreenectVideo> {
+    _held: &'c VideoStream<'a, 'b, D>,
+    pub timestamp: u32,
+    pub data: &'c [u16],
 }
 
-pub struct CameraFrame<'c> {
-    timestamp: u32,
-    data: &'c [u8],
+pub struct CameraFrame<'a, 'b, 'c, D: FreenectDeviceReady + FreenectDeviceMode + FreenectVideo> {
+    _held: &'c VideoStream<'a, 'b, D>,
+    pub timestamp: u32,
+    pub data: &'c [u8],
 }

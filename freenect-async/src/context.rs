@@ -128,7 +128,7 @@ where
 
     pub fn set_log_callback(&self, callback: Option<LogCallback>) {
         unsafe extern "C" fn c_callback_wrapper(
-            dev: *mut freenect_sys::freenect_context,
+            _dev: *mut freenect_sys::freenect_context,
             level: freenect_sys::freenect_loglevel,
             msg: *const std::os::raw::c_char,
         ) {
