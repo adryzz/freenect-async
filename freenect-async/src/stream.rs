@@ -1,5 +1,5 @@
 use lending_stream::LendingStream;
-use std::{future::Future, task::Poll};
+use std::{future::Future, task::{Poll, Waker}, time::Duration};
 
 use crate::{
     context::{FreenectDeviceMode, FreenectDeviceReady, FreenectReadyVideo}, device::FreenectDevice, formats::{FreenectFormat, FreenectVideoMode}, video::FreenectVideo, FreenectError
@@ -10,7 +10,8 @@ pub struct VideoStream<'a, 'b, D: FreenectVideo> {
     // keep this private
     pub(crate) device: &'b mut FreenectDevice<'a, D>,
     pub(crate) counter: u32,
-    pub(crate) out: Option<(&'b [u8], u32)>
+    pub(crate) out: Option<(&'b [u8], u32)>,
+    pub(crate) waker: Option<Waker>,
 }
 
 impl<'a, 'b, D: FreenectVideo> VideoStream<'a, 'b, D> {
@@ -30,10 +31,9 @@ impl<'a, 'b, D: FreenectVideo> VideoStream<'a, 'b, D> {
             let stream = Self {
                 device: device,
                 counter: 0,
-                out: None
+                out: None,
+                waker: None,
             };
-
-            freenect_sys::freenect_set_user(dev, std::mem::transmute(&stream));
 
             Ok(stream)
         }
@@ -57,7 +57,10 @@ extern "C" fn video_callback_standalone<'a>(
         let device = &mut *device;
 
         device.out = Some((data, timestamp));
-        println!("Video");
+        device.counter = 0;
+        if let Some(w) = &device.waker {
+            w.wake_by_ref();
+        }
     }
 }
 
@@ -83,6 +86,7 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item<'_>>> {
         // retrieve frame if available
+        self.waker = None;
         if let Some((data, timestamp)) = self.out {
             self.out = None;
             let frame = CameraFrame {
@@ -93,17 +97,24 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
             return Poll::Ready(Some(Ok(frame)))
         }
 
+        unsafe {freenect_sys::freenect_set_user(self.device.inner, std::mem::transmute(&*self))};
 
         let res = unsafe { freenect_sys::freenect_process_events(self.device.context.inner) };
         if res < 0 {
             self.counter = 0;
             return Poll::Ready(Some(Err(FreenectError::EventProcessingError)));
         }
-        if self.counter == 0 {
+
+        // arbitrary value to not busy-loop
+        if self.counter <= 20 {
 
             self.counter += 1;
+            cx.waker().wake_by_ref();
         }
+        self.waker = Some(cx.waker().clone());
 
+        // don't leave a dangling pointer
+        unsafe {freenect_sys::freenect_set_user(self.device.inner, std::ptr::null_mut())};
         return Poll::Pending;
     }
 }
@@ -113,7 +124,8 @@ pub struct DepthStream<'a, 'b, D: FreenectVideo> {
     // keep this private
     device: &'b mut FreenectDevice<'a, D>,
     pub(crate) counter: u32,
-    pub(crate) out: Option<(&'b [u16], u32)>
+    pub(crate) out: Option<(&'b [u16], u32)>,
+    pub(crate) waker: Option<Waker>,
 }
 
 impl<'a, 'b, D: FreenectVideo> DepthStream<'a, 'b, D> {
@@ -133,10 +145,9 @@ impl<'a, 'b, D: FreenectVideo> DepthStream<'a, 'b, D> {
             let stream = Self {
                 device: device,
                 counter: 0,
-                out: None
+                out: None,
+                waker: None
             };
-
-            freenect_sys::freenect_set_user(dev, std::mem::transmute(&stream));
 
             Ok(stream)
         }
@@ -160,7 +171,11 @@ extern "C" fn depth_callback_standalone<'a>(
         let device = &mut *device;
 
         device.out = Some((data, timestamp));
-        println!("Depth");
+        
+        device.counter = 0;
+        if let Some(w) = &device.waker {
+            w.wake_by_ref();
+        }
     }
 }
 
@@ -205,6 +220,7 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item<'_>>> {
         // retrieve frame if available
+        self.waker = None;
         if let Some((data, timestamp)) = self.out {
             self.out = None;
             let frame = DepthFrame {
@@ -215,16 +231,24 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
             return Poll::Ready(Some(Ok(frame)))
         }
 
-        if self.counter == 0 {
-            let res = unsafe { freenect_sys::freenect_process_events(self.device.context.inner) };
-            if res < 0 {
-                self.counter = 0;
-                return Poll::Ready(Some(Err(FreenectError::EventProcessingError)));
-            }
+        unsafe {freenect_sys::freenect_set_user(self.device.inner, std::mem::transmute(&*self))};
 
-            self.counter += 1;
+        let res = unsafe { freenect_sys::freenect_process_events(self.device.context.inner) };
+        if res < 0 {
+            self.counter = 0;
+            return Poll::Ready(Some(Err(FreenectError::EventProcessingError)));
         }
 
+        // arbitrary value to not busy-loop
+        if self.counter <= 20 {
+
+            self.counter += 1;
+            cx.waker().wake_by_ref();
+        }
+        self.waker = Some(cx.waker().clone());
+
+        // don't leave a dangling pointer
+        unsafe {freenect_sys::freenect_set_user(self.device.inner, std::ptr::null_mut())};
         return Poll::Pending;
     }
 }

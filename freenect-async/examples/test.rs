@@ -2,7 +2,7 @@ use freenect_async::{
     context::{FreenectContext, FreenectLogLevel}, formats::{FreenectDepthFormat, FreenectResolution, FreenectVideoFormat}, motors_led::FreenectLedState, FreenectError
 };
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     run().await.unwrap();
 }
@@ -53,10 +53,9 @@ async fn run() -> Result<(), FreenectError> {
     stream.dev_ref().set_tilt_degree(0.0)?;
     loop {
         use lending_stream::LendingStream;
-        std::thread::sleep(std::time::Duration::from_millis(10));
         let res = stream.next().await.unwrap().unwrap();
         dbg!(res.timestamp);
-        //stream.dev_ref().set_led(FreenectLedState::Green)?;
+        stream.dev_ref().set_led(FreenectLedState::Green)?;
         //stream.try_read_camera_frame()?;
         //stream.try_read_depth_frame()?;
     }
