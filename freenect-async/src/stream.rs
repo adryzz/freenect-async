@@ -1,9 +1,11 @@
 use lending_stream::LendingStream;
-use std::{future::Future, task::{Poll, Waker}, time::Duration};
+use std::task::{Poll, Waker};
 
 use crate::{
-    context::{FreenectDeviceMode, FreenectDeviceReady, FreenectReadyVideo}, device::FreenectDevice, formats::{FreenectFormat, FreenectVideoMode}, video::FreenectVideo, FreenectError
+    context::FreenectReadyVideo, device::FreenectDevice, formats::{FreenectFormat, FreenectVideoMode}, video::FreenectVideo, FreenectError
 };
+
+const BUSY_LOOP_REPLACE_ME: u32 = 20;
 
 #[derive(Debug)]
 pub struct VideoStream<'a, 'b, D: FreenectVideo> {
@@ -106,7 +108,8 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
         }
 
         // arbitrary value to not busy-loop
-        if self.counter <= 20 {
+        // TODO: find a way to not busy-loop that is better
+        if self.counter <= BUSY_LOOP_REPLACE_ME {
 
             self.counter += 1;
             cx.waker().wake_by_ref();
@@ -126,6 +129,7 @@ pub struct DepthStream<'a, 'b, D: FreenectVideo> {
     pub(crate) counter: u32,
     pub(crate) out: Option<(&'b [u16], u32)>,
     pub(crate) waker: Option<Waker>,
+    first: bool,
 }
 
 impl<'a, 'b, D: FreenectVideo> DepthStream<'a, 'b, D> {
@@ -146,7 +150,8 @@ impl<'a, 'b, D: FreenectVideo> DepthStream<'a, 'b, D> {
                 device: device,
                 counter: 0,
                 out: None,
-                waker: None
+                waker: None,
+                first: true
             };
 
             Ok(stream)
@@ -171,7 +176,7 @@ extern "C" fn depth_callback_standalone<'a>(
         let device = &mut *device;
 
         device.out = Some((data, timestamp));
-        
+        println!("counter: {}", device.counter);
         device.counter = 0;
         if let Some(w) = &device.waker {
             w.wake_by_ref();
@@ -223,6 +228,7 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
         self.waker = None;
         if let Some((data, timestamp)) = self.out {
             self.out = None;
+            self.first = false;
             let frame = DepthFrame {
                 _held: self,
                 timestamp,
@@ -240,7 +246,8 @@ impl<'a, 'b, D: FreenectVideo> LendingStream
         }
 
         // arbitrary value to not busy-loop
-        if self.counter <= 20 {
+        // TODO: find a way to not busy-loop that is better
+        if self.counter <= BUSY_LOOP_REPLACE_ME {
 
             self.counter += 1;
             cx.waker().wake_by_ref();
